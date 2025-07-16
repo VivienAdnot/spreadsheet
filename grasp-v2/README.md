@@ -117,6 +117,55 @@ npm run deploy
 - `gas-files/sidebar.html` : HTML avec Vue.js intégré (191 KB)
 - `gas-files/appsscript.json` : Configuration GAS
 
+## 🌐 Configuration Backend & Ngrok
+
+### API Backend (partagée avec V1)
+
+```bash
+# Démarrer l'API backend
+cd ../api
+npm install
+npm start
+# → API disponible sur http://localhost:3000
+```
+
+### Ngrok (exposition publique)
+
+```bash
+# Terminal séparé - exposer l'API
+ngrok http 3000
+# → Génère une URL publique (ex: https://abc123.ngrok.io)
+```
+
+### ⚠️ Important : URL Ngrok change à chaque redémarrage
+
+**À chaque redémarrage de ngrok, l'URL change !**
+
+1. **Relancer ngrok** : `ngrok http 3000`
+2. **Copier la nouvelle URL** (ex: `https://xyz789.ngrok.io`)
+3. **Mettre à jour Code.gs** dans `gas-files/Code.gs` :
+
+```javascript
+// Ligne 19 dans gas-files/Code.gs
+const API_URL = 'https://NOUVELLE-URL-NGROK.ngrok.io/upload';
+```
+
+4. **Redéployer** : `npm run deploy`
+
+### 🚀 Workflow quotidien
+
+```bash
+# 1. Démarrer l'API
+cd ../api && npm start
+
+# 2. Démarrer ngrok (terminal séparé)
+ngrok http 3000
+
+# 3. Copier l'URL ngrok et mettre à jour gas-files/Code.gs
+# 4. Redéployer si l'URL a changé
+npm run deploy
+```
+
 ### 4. 🎯 Résultat dans Google Sheets
 
 1. **Code.gs** : Crée le menu "🚀 Grasp V2" et affiche le sidebar
