@@ -82,6 +82,77 @@ Utilise la même API que Grasp V1 avec source: `'grasp-v2-vue-typescript'`
 - **Google Apps Script** - Backend Google Sheets
 - **Express.js** - API REST (partagée)
 
+## 🛠️ Outils & Rôles
+
+### 🔧 **Vite** - Build Tool Frontend
+
+**Ce que fait Vite :**
+```bash
+npm run build
+```
+
+**Input :**
+```
+frontend/
+├── App.vue         ← Composant Vue avec <template>, <script>, <style>
+├── main.ts         ← Point d'entrée TypeScript
+└── types.ts        ← Types TypeScript
+```
+
+**Output :**
+```
+frontend/dist/
+├── bundle.js       ← Vue.js + TypeScript compilé (61 KB)
+└── bundle.css      ← Styles CSS extraits (2 KB)
+```
+
+**Transformations :**
+- ✅ **Vue SFC** → JavaScript vanilla
+- ✅ **TypeScript** → JavaScript 
+- ✅ **CSS scoped** → CSS normal
+- ✅ **Import/Export** → Code compatible navigateur
+- ✅ **Minification** → Code optimisé
+
+### 📤 **Clasp** - Déploiement Google Apps Script
+
+**Ce que fait Clasp :**
+```bash
+npm run deploy
+```
+
+**Input :**
+```
+gas-files/
+├── Code.gs         ← Google Apps Script (JavaScript)
+├── sidebar.html    ← HTML avec Vue.js injecté
+└── appsscript.json ← Configuration Google Apps Script
+```
+
+**Action :**
+- ✅ **Authentification** Google
+- ✅ **Upload** fichiers vers Google Apps Script
+- ✅ **Synchronisation** avec le projet Google
+- ✅ **Déploiement** dans Google Sheets
+
+### 🔄 **Flux complet**
+
+```
+1. App.vue (Vue + TypeScript)
+        ↓ (Vite build)
+2. bundle.js + bundle.css
+        ↓ (build-sidebar.js)
+3. sidebar.html avec Vue injecté
+        ↓ (Clasp deploy)
+4. Google Apps Script (accessible dans Google Sheets)
+```
+
+### 🎯 **Analogie simple**
+
+- **Vite** = Compilateur (transforme ton code moderne en code compatible)
+- **Clasp** = Livreur (prend tes fichiers et les met sur Google)
+
+**Note :** Pas besoin de **Rollup** - Vite utilise Rollup en interne pour le bundling.
+
 ## Processus de Build & Déploiement
 
 ### 1. 📦 Build du Bundle Vue.js
