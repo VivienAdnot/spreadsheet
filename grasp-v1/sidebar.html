@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 100%;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #4285f4, #34a853);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    
+    .info-section {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #dadce0;
+    }
+    
+    .info-section h3 {
+      margin-top: 0;
+      color: #5f6368;
+      font-size: 14px;
+    }
+    
+    .info-item {
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #5f6368;
+    }
+    
+    .info-value {
+      color: #202124;
+    }
+    
+    .upload-section {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #dadce0;
+    }
+    
+    .upload-btn {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 12px;
+      transition: background-color 0.3s;
+    }
+    
+    .upload-btn:hover:not(:disabled) {
+      background: #3367d6;
+    }
+    
+    .upload-btn:disabled {
+      background: #9aa0a6;
+      cursor: not-allowed;
+    }
+    
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-size: 13px;
+      display: none;
+      position: relative;
+    }
+    
+    .status-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.7;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .status-close:hover {
+      opacity: 1;
+    }
+    
+    .status-success {
+      background: #e8f5e8;
+      color: #137333;
+      border: 1px solid #ceead6;
+    }
+    
+    .status-error {
+      background: #fce8e6;
+      color: #d93025;
+      border: 1px solid #f9ab0a;
+    }
+    
+    .status-loading {
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #bbdefb;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #4285f4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>� Grasp</h2>
+    </div>
+    
+    <div class="info-section">
+      <h3>Informations de la feuille</h3>
+      <div class="info-item">
+        <span class="info-label">Nom:</span>
+        <span class="info-value" id="sheetName">Chargement...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Lignes:</span>
+        <span class="info-value" id="rowCount">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Colonnes:</span>
+        <span class="info-value" id="columnCount">-</span>
+      </div>
+    </div>
+    
+    <div class="upload-section">
+      <button class="upload-btn" id="uploadBtn" onclick="startUpload()">
+        � Uploader la feuille
+      </button>
+      
+      <div class="status-message" id="statusMessage"></div>
+    </div>
+    
+    <div class="footer">
+      Grasp • Google Sheets Extension
+    </div>
+  </div>
+
+  <script>
+    // Charger les informations de la feuille au démarrage
+    window.onload = function() {
+      loadSheetInfo();
+    };
+    
+    // Charger les informations de la feuille courante
+    function loadSheetInfo() {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            document.getElementById('sheetName').textContent = result.info.sheetName;
+            document.getElementById('rowCount').textContent = result.info.rows;
+            document.getElementById('columnCount').textContent = result.info.columns;
+          } else {
+            showStatus('Erreur: ' + result.error, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showStatus('Erreur: ' + error.message, 'error');
+        })
+        .getCurrentSheetInfo();
+    }
+    
+    // Démarrer l'upload
+    function startUpload() {
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="loading-spinner"></span>Upload en cours...';
+      
+      showStatus('Upload en cours...', 'loading');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = '� Uploader la feuille';
+          
+          if (result.success) {
+            showStatus(result.message, 'success');
+            // Recharger les infos de la feuille
+            loadSheetInfo();
+          } else {
+            showStatus('Erreur: ' + result.error, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = '� Uploader la feuille';
+          showStatus('Erreur: ' + error.message, 'error');
+        })
+        .performUpload();
+    }
+    
+    // Afficher un message de statut
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.innerHTML = message + '<button class="status-close" onclick="hideStatus()">×</button>';
+      statusDiv.className = 'status-message status-' + type;
+      statusDiv.style.display = 'block';
+      
+      // Masquer le message après un délai approprié
+      if (type === 'success') {
+        // Message de succès visible pendant 20 secondes
+        setTimeout(function() {
+          hideStatus();
+        }, 20000);
+      } else if (type === 'loading') {
+        // Message de loading ne disparaît pas automatiquement
+        // Il sera remplacé par le message de succès ou d'erreur
+      } else if (type === 'error') {
+        // Message d'erreur visible pendant 30 secondes
+        setTimeout(function() {
+          hideStatus();
+        }, 30000);
+      }
+    }
+    
+    // Masquer le message de statut
+    function hideStatus() {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.style.display = 'none';
+    }
+  </script>
+</body>
+</html>

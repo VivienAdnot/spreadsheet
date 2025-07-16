@@ -1,0 +1,25 @@
+{
+  "name": "grasp-v2-vue-typescript",
+  "version": "1.0.0",
+  "description": "Grasp Google Sheets Extension - Vue.js + TypeScript version",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build-sidebar": "node build-sidebar.js",
+    "build-all": "npm run build && npm run build-sidebar",
+    "preview": "vite preview",
+    "deploy": "npm run build-all && clasp push",
+    "watch": "vite build --watch"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.83",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.4",
+    "vue": "^3.4.21"
+  },
+  "dependencies": {
+    "vue": "^3.4.21"
+  }
+}
