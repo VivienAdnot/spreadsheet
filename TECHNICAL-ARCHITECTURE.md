@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the technical architecture, t
 
 ## 🎯 Overview
 
-The Grasp project represents a complete evolution from a 20-minute prototype to a production-ready Google Apps Script extension with modern TypeScript tooling and automated deployment pipeline.
+The Grasp project is a production-ready Google Apps Script extension ecosystem with modern TypeScript tooling, automated deployment pipeline, and comprehensive development workflow.
 
 ## 🔧 Development Pipeline
 
@@ -41,7 +41,6 @@ graph TD
 
 ### **Development Environment**
 - **Clasp CLI** - Google Apps Script command-line interface
-- **Nodemon** - File watching and auto-deployment
 - **Hot Reload** - Automatic compilation and deployment on file changes
 
 ### **Code Quality**
@@ -82,7 +81,7 @@ sequenceDiagram
     Dev->>TS: Edit src/index.ts
     TS->>Rollup: Type check & compile
     Rollup->>Babel: Bundle modules
-    Babel->>Clasp: Transform to ES5
+    Babel->>Clasp: Transform to ES2019
     Clasp->>GAS: Deploy via API
     GAS->>Sheets: Install extension
     Sheets-->>Dev: Live extension ready
@@ -91,15 +90,11 @@ sequenceDiagram
 ### **3. Google Apps Script Integration**
 
 #### **Runtime Environment**
-- **V8 Engine** - Modern JavaScript runtime
+- **V8 Engine** - Modern JavaScript runtime with ES6+ support
 - **Google Workspace APIs** - Native integration with Sheets, Drive, Gmail
 - **Server-side Execution** - Cloud-based function execution
-- **Stackdriver Logging** - Centralized error tracking
-
-#### **Extension Types**
-- **Add-on Extensions** - Installable across Google Workspace
-- **Bound Scripts** - Attached to specific spreadsheets
-- **Standalone Scripts** - Independent cloud functions
+- **Cloud Logging** - Centralized error tracking and monitoring
+- **ES2019 Support** - Modern JavaScript features including async/await, Promises, destructuring
 
 ### **4. Development Workflows**
 
@@ -114,21 +109,7 @@ clasp create --type sheets
 npm run watch
 # ↳ Parallel execution:
 #   - rollup -c --watch          (Auto-compile TypeScript)
-#   - nodemon --exec "clasp push" (Auto-deploy on changes)
-```
-
-#### **Automated Setup (setup-grasp-project.sh)**
-```bash
-# Complete project creation in 2 minutes
-./setup-grasp-project.sh my-extension
-# ↳ Automated pipeline:
-#   1. Prerequisites validation (Node.js, Git)
-#   2. Project structure generation
-#   3. Dependencies installation
-#   4. Google Apps Script authentication
-#   5. Cloud project creation
-#   6. Initial deployment
-#   7. Development environment ready
+#   - clasp push --force --watch (Auto-deploy on changes)
 ```
 
 ## 🔐 Authentication & Security
@@ -148,39 +129,6 @@ npm run watch
 ### **Build Optimizations**
 - **Tree Shaking Prevention** - Ensures all functions are available to GAS
 - **ES Module Format** - Native Google Apps Script compatibility
-- **Code Minification** - Reduced bundle size
-- **Source Map Generation** - Development debugging support
-
-### **Runtime Optimizations**
-- **Function Naming** - Valid JavaScript identifiers for GAS calls
-- **Global Function Exposure** - Direct access from Google Sheets UI
-- **Efficient API Usage** - Batch operations where possible
-
-## 🚀 Deployment Pipeline
-
-### **Development Deployment**
-```mermaid
-graph LR
-    A[📝 Code Change] --> B[🔄 Watch Trigger]
-    B --> C[⚡ Fast Rebuild]
-    C --> D[📤 Auto Push]
-    D --> E[☁️ Live Update]
-    
-    style A fill:#e3f2fd
-    style E fill:#e8f5e8
-```
-
-### **Production Deployment**
-```mermaid
-graph LR
-    A[✅ Code Review] --> B[🏗️ Build Process]
-    B --> C[🧪 Testing]
-    C --> D[📋 Manual Deploy]
-    D --> E[🌐 Production]
-    
-    style A fill:#fff3e0
-    style E fill:#e8f5e8
-```
 
 ## 🌐 Google Workspace Integration
 
@@ -192,7 +140,6 @@ graph LR
 
 ### **API Integration Points**
 - **SpreadsheetApp** - Google Sheets manipulation
-- **DriveApp** - File system access
 - **UrlFetchApp** - External API communication
 - **PropertiesService** - Persistent storage
 - **HtmlService** - Custom UI components
@@ -203,45 +150,12 @@ graph LR
 - **Dialogs** - Modal interaction windows
 - **Toast Notifications** - Non-intrusive user feedback
 
-## 📈 Scalability Considerations
-
-### **Code Organization**
-- **Modular Architecture** - Separated concerns and reusable components
-- **Type Safety** - Compile-time error detection
-- **Documentation** - Comprehensive inline and external documentation
-
-### **Performance Monitoring**
-- **Stackdriver Integration** - Centralized logging and monitoring
-- **Error Tracking** - Automatic exception reporting
-- **Usage Analytics** - Extension adoption and performance metrics
-
-## 🔄 Version Evolution
-
-### **Development Phases**
-1. **grasp-v1** - 20-minute vanilla JavaScript prototype
-2. **grasp-v2** - Vue.js + TypeScript refactoring with complex architecture
-3. **grasp-final** - Optimized TypeScript + Rollup production setup
-4. **setup-automation** - Complete project automation script
-
-### **Architectural Improvements**
-- **Build Complexity Reduction** - From Vue.js ecosystem to focused Rollup setup
-- **Development Experience** - Hot reload and automatic deployment
-- **Setup Automation** - From hours of manual configuration to 2-minute automation
-- **Production Readiness** - Optimized bundle size and runtime performance
-
 ## 🎯 Future Enhancements
 
 ### **Planned Improvements**
-- **Testing Framework** - Automated unit and integration testing
+- **HTML Rendering System** - Modern UI framework integration (Astro, Vue.js, Lit, Alpine.js)
 - **CI/CD Pipeline** - GitHub Actions integration
 - **Multi-environment Support** - Development, staging, production environments
-- **Advanced Bundling** - Code splitting and lazy loading support
-
-### **Monitoring & Analytics**
-- **Performance Metrics** - Runtime performance tracking
-- **User Behavior Analytics** - Extension usage patterns
-- **Error Rate Monitoring** - Proactive issue detection
-- **Resource Usage Optimization** - Memory and execution time improvements
 
 ---
 
