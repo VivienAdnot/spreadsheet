@@ -30,6 +30,12 @@
         {{ isUploading ? 'Upload en cours...' : '🚀 Uploader la feuille' }}
       </button>
       
+      <!-- Affichage des résultats de validation -->
+      <ValidationPanel 
+        v-if="validationResults.length > 0"
+        :validationResults="validationResults"
+      />
+      
       <div 
         v-if="statusMessage.show" 
         :class="['status-message', `status-${statusMessage.type}`]"
@@ -47,7 +53,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { SheetInfo, UploadResult } from './types'
+import ValidationPanel from './components/ValidationPanel.vue'
+import { validateSheet } from './utils/validation'
+import type { SheetInfo, SheetData, GasResult, UploadResult, ProcessedSheetData, UploadPayload, ValidationResult } from './types'
 
 // État réactif
 const sheetInfo = ref<SheetInfo>({
@@ -59,6 +67,7 @@ const sheetInfo = ref<SheetInfo>({
 })
 
 const isUploading = ref(false)
+const validationResults = ref<ValidationResult[]>([])
 const statusMessage = ref({
   show: false,
   text: '',
@@ -67,18 +76,83 @@ const statusMessage = ref({
 
 let statusTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Fonctions
+// ========================================
+// LOGIQUE MÉTIER (maintenant dans Vue!)
+// ========================================
+
+/**
+ * Valide les données de la feuille avec des règles configurables
+ */
+const validateSheetData = (data: any[][]): ValidationResult[] => {
+  // Définir les règles de validation ici
+  const rules = [
+    {
+      column: 1, // Colonne A
+      type: 'required' as const
+    },
+    {
+      column: 2, // Colonne B
+      type: 'format' as const,
+      params: 'email'
+    },
+    {
+      column: 3, // Colonne C
+      type: 'range' as const,
+      params: { min: 0, max: 100 }
+    }
+  ]
+  
+  return validateSheet(data, rules)
+}
+
+/**
+ * Traite et formate les données pour l'upload
+ */
+const processSheetData = (rawData: SheetData): ProcessedSheetData => {
+  const processed: ProcessedSheetData = {
+    sheets: [{
+      name: rawData.metadata.sheetName,
+      data: rawData.values,
+      rows: rawData.metadata.rows,
+      columns: rawData.metadata.columns
+    }],
+    metadata: {
+      ...rawData.metadata,
+      version: "2.0-vue-typescript",
+      processedAt: new Date().toISOString()
+    }
+  }
+  
+  return processed
+}
+
+/**
+ * Prépare le payload final pour l'API
+ */
+const prepareUploadPayload = (processedData: ProcessedSheetData): UploadPayload => {
+  return {
+    timestamp: new Date().toISOString(),
+    data: processedData,
+    format: 'json',
+    source: 'grasp-v2-vue-typescript'
+  }
+}
+
+// ========================================
+// FONCTIONS D'INTERFACE
+// ========================================
+
 const loadSheetInfo = async () => {
   try {
-    const result = await new Promise<{ success: boolean; info?: SheetInfo; error?: string }>((resolve, reject) => {
+    const result = await new Promise<GasResult<SheetInfo>>((resolve, reject) => {
       window.google.script.run
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
         .getCurrentSheetInfo()
     })
     
-    if (result.success && result.info) {
-      sheetInfo.value = result.info
+    if (result.success && result.data) {
+      sheetInfo.value = result.data
     } else {
       showStatus('Erreur: ' + (result.error || 'Impossible de charger les informations'), 'error')
     }
@@ -91,23 +165,59 @@ const startUpload = async () => {
   if (isUploading.value) return
   
   isUploading.value = true
-  showStatus('Upload en cours...', 'loading')
+  showStatus('Récupération des données...', 'loading')
   
   try {
-    const result = await new Promise<UploadResult>((resolve, reject) => {
+    // 1. Récupérer les données brutes depuis Google Sheets
+    const sheetResult = await new Promise<GasResult<SheetData>>((resolve, reject) => {
       window.google.script.run
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
-        .performUpload()
+        .getSheetData()
     })
     
-    if (result.success) {
-      showStatus(result.message, 'success')
+    if (!sheetResult.success || !sheetResult.data) {
+      throw new Error(sheetResult.error || 'Impossible de récupérer les données')
+    }
+    
+    showStatus('Validation des données...', 'loading')
+    
+    // 2. Valider les données (logique métier dans Vue!)
+    const validationResults_temp = validateSheetData(sheetResult.data.values)
+    validationResults.value = validationResults_temp
+    
+    if (validationResults_temp.length > 0) {
+      const errorCount = validationResults_temp.filter(r => !r.valid).length
+      showStatus(`⚠️ ${errorCount} erreur(s) de validation trouvée(s)`, 'error')
+      // Pour l'instant on continue, mais on pourrait afficher les erreurs
+    }
+    
+    showStatus('Traitement des données...', 'loading')
+    
+    // 3. Traiter les données (logique métier dans Vue!)
+    const processedData = processSheetData(sheetResult.data)
+    
+    // 4. Préparer le payload (logique métier dans Vue!)
+    const uploadPayload = prepareUploadPayload(processedData)
+    
+    showStatus('Upload en cours...', 'loading')
+    
+    // 5. Upload via la fonction GAS (couche réseau uniquement)
+    const uploadResult = await new Promise<UploadResult>((resolve, reject) => {
+      window.google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .performUpload(uploadPayload)
+    })
+    
+    if (uploadResult.success) {
+      showStatus(`✅ Upload réussi! ${processedData.sheets[0].rows} lignes et ${processedData.sheets[0].columns} colonnes envoyées.`, 'success')
       // Recharger les infos de la feuille
       await loadSheetInfo()
     } else {
-      showStatus('Erreur: ' + (result.error || 'Upload échoué'), 'error')
+      showStatus('Erreur: ' + (uploadResult.error || 'Upload échoué'), 'error')
     }
+    
   } catch (error) {
     showStatus('Erreur: ' + (error as Error).message, 'error')
   } finally {

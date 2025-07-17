@@ -32,41 +32,30 @@ function showSidebar() {
 }
 
 /**
- * Récupère les données de la feuille active
+ * Récupère les données brutes de la feuille active
+ * (Couche d'accès aux données uniquement)
  */
 function getSheetData() {
   try {
     const sheet = SpreadsheetApp.getActiveSheet();
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const range = sheet.getDataRange();
     const values = range.getValues();
     
-    // Récupère les métadonnées
-    const sheetName = sheet.getName();
-    const lastRow = sheet.getLastRow();
-    const lastColumn = sheet.getLastColumn();
-    
-    // Formate les données
-    const data = {
-      sheets: [{
-        name: sheetName,
-        data: values,
-        rows: lastRow,
-        columns: lastColumn
-      }],
-      metadata: {
-        spreadsheetId: SpreadsheetApp.getActiveSpreadsheet().getId(),
-        spreadsheetName: SpreadsheetApp.getActiveSpreadsheet().getName(),
-        sheetName: sheetName,
-        timestamp: new Date().toISOString(),
-        version: "2.0-vue-typescript"
-      }
-    };
-    
     return {
       success: true,
-      data: data,
-      rowCount: lastRow,
-      columnCount: lastColumn
+      data: {
+        values: values,
+        metadata: {
+          spreadsheetId: spreadsheet.getId(),
+          spreadsheetName: spreadsheet.getName(),
+          sheetName: sheet.getName(),
+          rows: sheet.getLastRow(),
+          columns: sheet.getLastColumn(),
+          url: spreadsheet.getUrl(),
+          timestamp: new Date().toISOString()
+        }
+      }
     };
     
   } catch (error) {
@@ -79,26 +68,49 @@ function getSheetData() {
 }
 
 /**
- * Upload les données vers l'API
+ * Récupère les données d'une plage spécifique
+ * (pour les futures fonctionnalités de validation)
  */
-function uploadToApi(data) {
+function getCellRange(rangeNotation) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSheet();
+    const range = sheet.getRange(rangeNotation);
+    const values = range.getValues();
+    
+    return {
+      success: true,
+      data: {
+        values: values,
+        range: rangeNotation,
+        numRows: range.getNumRows(),
+        numColumns: range.getNumColumns()
+      }
+    };
+    
+  } catch (error) {
+    Logger.log('Erreur getCellRange: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Upload des données formatées vers l'API
+ * (Couche d'accès réseau uniquement)
+ */
+function uploadToApi(formattedData) {
   try {
     // URL de l'API via ngrok
     const API_URL = 'https://67151878f9cc.ngrok-free.app/api/upload-spreadsheet';
-    
-    const payload = {
-      timestamp: new Date().toISOString(),
-      data: data,
-      format: 'json',
-      source: 'grasp-v2-vue-typescript'
-    };
     
     const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      payload: JSON.stringify(payload)
+      payload: JSON.stringify(formattedData)
     };
     
     const response = UrlFetchApp.fetch(API_URL, options);
@@ -125,35 +137,15 @@ function uploadToApi(data) {
 }
 
 /**
- * Fonction principale d'upload appelée depuis le sidebar Vue
+ * Fonction simplifiée d'upload - la logique est maintenant dans Vue.js
+ * (Juste un pont entre Vue et les fonctions GAS)
  */
-function performUpload() {
+function performUpload(processedData) {
   try {
-    // Récupère les données de la feuille
-    const sheetResult = getSheetData();
+    // Upload vers l'API avec les données déjà traitées par Vue
+    const uploadResult = uploadToApi(processedData);
     
-    if (!sheetResult.success) {
-      return {
-        success: false,
-        error: 'Impossible de récupérer les données: ' + sheetResult.error
-      };
-    }
-    
-    // Upload vers l'API
-    const uploadResult = uploadToApi(sheetResult.data);
-    
-    if (uploadResult.success) {
-      return {
-        success: true,
-        message: `✅ Upload réussi (Vue.js)! ${sheetResult.rowCount} lignes et ${sheetResult.columnCount} colonnes envoyées.`,
-        details: uploadResult
-      };
-    } else {
-      return {
-        success: false,
-        error: uploadResult.error
-      };
-    }
+    return uploadResult;
     
   } catch (error) {
     Logger.log('Erreur performUpload: ' + error.toString());
