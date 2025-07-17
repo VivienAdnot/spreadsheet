@@ -61,14 +61,93 @@ npm run build-all
 3. Cliquez sur **🚀 Uploader la feuille**
 4. Les données sont envoyées vers l'API backend
 
-## Différences avec V1
+## 🏗️ Architecture Refactorisée
 
-- ✅ **Vue.js 3** avec Composition API
-- ✅ **TypeScript** avec types stricts
-- ✅ **Vite** pour le build et le dev
-- ✅ **Réactivité** Vue.js native
-- ✅ **Composants** réutilisables
-- ✅ **Types** pour l'interface Google Apps Script
+### 📋 Séparation des responsabilités
+
+**Avant :**
+```
+Code.gs → Toute la logique (données + business + validation)
+App.vue → Interface uniquement
+```
+
+**Après :**
+```
+Code.gs → Couche d'accès aux données uniquement
+App.vue → Logique métier + validation + traitement
+Components/ → Composants réutilisables
+Utils/ → Utilitaires de validation
+```
+
+### 🔧 **Code.gs** - Couche d'accès aux données
+
+```javascript
+// Fonctions d'accès aux données Google Sheets
+function getSheetData() { /* Récupère les données brutes */ }
+function getCellRange(range) { /* Récupère une plage spécifique */ }
+function getCurrentSheetInfo() { /* Infos de la feuille */ }
+function uploadToApi(data) { /* Upload réseau */ }
+function performUpload(processedData) { /* Bridge vers API */ }
+```
+
+### 🎨 **App.vue** - Logique métier
+
+```vue
+<script setup lang="ts">
+// Validation des données
+const validateSheetData = (data) => { /* Règles de validation */ }
+
+// Traitement des données
+const processSheetData = (data) => { /* Formatage */ }
+
+// Préparation upload
+const prepareUploadPayload = (data) => { /* Payload API */ }
+</script>
+```
+
+### 🔍 **ValidationPanel.vue** - Composant de validation
+
+```vue
+<template>
+  <div class="validation-panel">
+    <div v-if="errorCount > 0">
+      ⚠️ {{ errorCount }} erreur(s) trouvée(s)
+    </div>
+    <!-- Affichage des erreurs par cellule -->
+  </div>
+</template>
+```
+
+### 🛠️ **utils/validation.ts** - Utilitaires
+
+```typescript
+// Validation configurable
+export const validateSheet = (data, rules) => { /* ... */ }
+
+// Types de validation
+export const validateRequired = (value, row, col) => { /* ... */ }
+export const validateFormat = (value, row, col, format) => { /* ... */ }
+export const validateRange = (value, row, col, min, max) => { /* ... */ }
+export const validateCustom = (value, row, col, validator) => { /* ... */ }
+```
+
+### 🎯 **Avantages de cette architecture**
+
+- ✅ **Logique testable** en Vue.js
+- ✅ **Validation réactive** avec TypeScript
+- ✅ **Règles configurables** depuis l'interface
+- ✅ **Séparation claire** des responsabilités
+- ✅ **Extensible** pour futures fonctionnalités
+- ✅ **Composants réutilisables**
+
+### 🔮 **Prêt pour les fonctionnalités avancées**
+
+Cette architecture permet maintenant d'ajouter facilement :
+- Validation avec règles du backend
+- Sélection de plages spécifiques
+- Validation en temps réel
+- Règles personnalisées par colonne
+- Interface de configuration des validations
 
 ## API Backend
 
