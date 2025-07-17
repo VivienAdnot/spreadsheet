@@ -52,7 +52,7 @@ git --version   # Doit afficher une version
 
 ### Télécharger le script
 ```bash
-curl -O https://raw.githubusercontent.com/[votre-repo]/setup-grasp-project.sh
+curl -O https://raw.githubusercontent.com/VivienAdnot/spreadsheet/main/setup-grasp-project.sh
 chmod +x setup-grasp-project.sh
 ```
 
